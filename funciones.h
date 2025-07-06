@@ -1,19 +1,19 @@
 // Estructura para almacenar datos de contaminantes
 struct Contaminante
 {
-    float co2;      // Dióxido de carbono (ppm)
-    float so2;      // Dióxido de azufre (µg/m³)
-    float no2;      // Dióxido de nitrógeno (µg/m³)
-    float pm25;     // Partículas PM2.5 (µg/m³)
+    float co2[7];      // Dióxido de carbono (ppm)
+    float so2[7];      // Dióxido de azufre (µg/m³)
+    float no2[7];      // Dióxido de nitrógeno (µg/m³)
+    float pm25[7];     // Partículas PM2.5 (µg/m³)
 };
 
 // Estructura para factores climáticos
 struct FactoresClimaticos
 {
-    float temperatura;    // Temperatura (°C)
-    float humedad;       // Humedad relativa (%)
-    float velocidadViento; // Velocidad del viento (km/h)
-    char direccionViento[10]; // Dirección del viento
+    float temperatura[7];    // Temperatura (°C)
+    float humedad[7];       // Humedad relativa (%)
+    float velocidadViento[7]; // Velocidad del viento (km/h)
+    char direccionViento[7][10]; // Dirección del viento
 };
 
 // Estructura para una zona de monitoreo
@@ -83,3 +83,4 @@ int cargarAlertas(struct Alerta alertas[], int *numAlertas);
 // Funciones de reportes
 void generarReporte(struct ZonaMonitoreo zonas[], int numZonas, struct RegistroHistorico registros[], int numRegistros);
 void exportarDatos(struct ZonaMonitoreo zonas[], int numZonas);
+void generarRecomendaciones(struct ZonaMonitoreo zonas[], int numZonas);
