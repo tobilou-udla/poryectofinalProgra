@@ -4,7 +4,6 @@
 int main() {
     // Arreglos para almacenar datos del sistema
     struct ZonaMonitoreo zonas[20];
-    struct Alerta alertas[100];
     int numZonas = 0;
     int numAlertas = 0;
 
