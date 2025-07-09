@@ -51,8 +51,47 @@ int main() {
                     printf("No se pudieron cargar las zonas para exportar.\n");
                 }
                 break;
-            case 7:
+            case 8:
                 printf("Saliendo del Sistema de Monitoreo de Contaminación del Aire.\n");
+                break;
+            case 7:
+                if(cargarZonas(zonas, &numZonas)) {
+                    int zonaId;
+                    float co2, so2, no2, pm25, temperatura, humedad, velocidadViento;
+                    char direccionViento[10], fecha[20], hora[10];
+
+                    printf("Ingrese el ID de la zona para agregar el reporte: ");
+                    scanf("%d", &zonaId);
+
+                    printf("Ingrese los datos del reporte:\n");
+                    printf("CO2 (ppm): ");
+                    scanf("%f", &co2);
+                    printf("SO2 (µg/m³): ");
+                    scanf("%f", &so2);
+                    printf("NO2 (µg/m³): ");
+                    scanf("%f", &no2);
+                    printf("PM2.5 (µg/m³): ");
+                    scanf("%f", &pm25);
+                    printf("Temperatura (°C): ");
+                    scanf("%f", &temperatura);
+                    printf("Humedad (%): ");
+                    scanf("%f", &humedad);
+                    printf("Velocidad del viento (km/h): ");
+                    scanf("%f", &velocidadViento);
+                    printf("Dirección del viento: ");
+                    scanf("%s", direccionViento);
+                    obtenerFechaHora(fecha, hora);
+
+                    for (int i = 0; i < numZonas; i++) {
+                        if (zonas[i].id == zonaId) {
+                            agregarReporte(&zonas[i], co2, so2, no2, pm25, temperatura, humedad, velocidadViento, direccionViento, fecha, hora);
+                            printf("Reporte agregado correctamente a la zona %s.\n", zonas[i].nombre);
+                            break;
+                        }
+                    }
+                } else {
+                    printf("No se pudieron cargar las zonas para agregar un reporte.\n");
+                }
                 break;
             default:
                 printf("Opción no válida. Por favor, intente de nuevo.\n");
