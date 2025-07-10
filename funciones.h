@@ -1,19 +1,19 @@
 // Estructura para almacenar datos de contaminantes
 struct Contaminante
 {
-    float co2[30];      // Dióxido de carbono (ppm)
-    float so2[30];      // Dióxido de azufre (µg/m³)
-    float no2[30];      // Dióxido de nitrógeno (µg/m³)
-    float pm25[30];     // Partículas PM2.5 (µg/m³)
+    float co2[50];      // Dióxido de carbono (ppm)
+    float so2[50];      // Dióxido de azufre (µg/m³)
+    float no2[50];      // Dióxido de nitrógeno (µg/m³)
+    float pm25[50];     // Partículas PM2.5 (µg/m³)
 };
 
 // Estructura para factores climáticos
 struct FactoresClimaticos
 {
-    float temperatura[30];    // Temperatura (°C)
-    float humedad[30];       // Humedad relativa (%)
-    float velocidadViento[30]; // Velocidad del viento (km/h)
-    char direccionViento[30][10]; // Dirección del viento
+    float temperatura[50];    // Temperatura (°C)
+    float humedad[50];       // Humedad relativa (%)
+    float velocidadViento[50]; // Velocidad del viento (km/h)
+    float direccionViento[50]; // Dirección del viento en grados
 };
 
 // Estructura para una zona de monitoreo
@@ -24,8 +24,8 @@ struct ZonaMonitoreo
     char ubicacion[100];
     struct Contaminante contaminantes;
     struct FactoresClimaticos factoresClimaticos;
-    char fecha[20];      // Fecha de la medición
-    char hora[10];       // Hora de la medición
+    char fecha[30][20]; // Arreglo para almacenar las últimas 30 fechas
+    char hora[30][10];  // Arreglo para almacenar las últimas 30 horas
 };
 
 // Funciones principales del sistema de monitoreo de contaminación
@@ -48,4 +48,4 @@ void generarAlertas(struct ZonaMonitoreo zonas[], int numZonas);
 // Funciones de reportes
 void exportarDatos(struct ZonaMonitoreo zonas[], int numZonas);
 void generarRecomendaciones(struct ZonaMonitoreo zonas[], int numZonas);
-void agregarReporte(struct ZonaMonitoreo *zona, float co2, float so2, float no2, float pm25, float temperatura, float humedad, float velocidadViento, const char *direccionViento, const char *fecha, const char *hora);
+void agregarReporte(struct ZonaMonitoreo *zona, float co2, float so2, float no2, float pm25, float temperatura, float humedad, float velocidadViento, float direccionViento, char fecha[], char hora[]);

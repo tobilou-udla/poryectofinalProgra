@@ -5,20 +5,20 @@
 
 // Umbrales críticos para contaminantes (basados en estándares internacionales)
 #define UMBRAL_CO2_PRECAUCION 1000
-#define UMBRAL_CO2_ALERTA 1500
-#define UMBRAL_CO2_EMERGENCIA 2000
+#define UMBRAL_CO2_ALERTA 5000
+#define UMBRAL_CO2_EMERGENCIA 30000
 
-#define UMBRAL_SO2_PRECAUCION 80
-#define UMBRAL_SO2_ALERTA 150
-#define UMBRAL_SO2_EMERGENCIA 250
+#define UMBRAL_SO2_PRECAUCION 35
+#define UMBRAL_SO2_ALERTA 40
+#define UMBRAL_SO2_EMERGENCIA 75
 
-#define UMBRAL_NO2_PRECAUCION 100
-#define UMBRAL_NO2_ALERTA 200
-#define UMBRAL_NO2_EMERGENCIA 300
+#define UMBRAL_NO2_PRECAUCION 10
+#define UMBRAL_NO2_ALERTA 25
+#define UMBRAL_NO2_EMERGENCIA 200
 
-#define UMBRAL_PM25_PRECAUCION 25
-#define UMBRAL_PM25_ALERTA 50
-#define UMBRAL_PM25_EMERGENCIA 75
+#define UMBRAL_PM25_PRECAUCION 10
+#define UMBRAL_PM25_ALERTA 25
+#define UMBRAL_PM25_EMERGENCIA 35
 
 // Declare a global variable for the number of records
 int numRegistros = 30;
@@ -27,91 +27,33 @@ void crearZonasMonitoreo(){
     struct ZonaMonitoreo zonas[20];
     int numZonas = 5; // Crear 5 zonas de ejemplo
 
-    // Zona 1: Centro Histórico
-    zonas[0].id = 1;
-    strcpy(zonas[0].nombre, "Centro Histórico");
-    strcpy(zonas[0].ubicacion, "Plaza Principal, Quito");
-    for (int i = 0; i < numRegistros; i++) {
-        zonas[0].contaminantes.co2[i] = 450.5 + i * 10;
-        zonas[0].contaminantes.so2[i] = 25.3 + i * 2;
-        zonas[0].contaminantes.no2[i] = 45.7 + i * 3;
-        zonas[0].contaminantes.pm25[i] = 15.2 + i * 1;
-        zonas[0].factoresClimaticos.temperatura[i] = 18.5 + i * 0.5;
-        zonas[0].factoresClimaticos.humedad[i] = 65.0 - i * 1;
-        zonas[0].factoresClimaticos.velocidadViento[i] = 8.2 + i * 0.2;
-        strcpy(zonas[0].factoresClimaticos.direccionViento[i], "NE");
-    }
-    strcpy(zonas[0].fecha, "15/07/2025");
-    strcpy(zonas[0].hora, "08:00:00");
+    for (int z = 0; z < numZonas; z++) {
+        zonas[z].id = z + 1;
+        sprintf(zonas[z].nombre, "Zona %d", z + 1);
+        sprintf(zonas[z].ubicacion, "Ubicación %d", z + 1);
 
-    // Zona 2: Zona Industrial Norte
-    zonas[1].id = 2;
-    strcpy(zonas[1].nombre, "Zona Industrial Norte");
-    strcpy(zonas[1].ubicacion, "Sector Industrial, Quito");
-    for (int i = 0; i < numRegistros; i++) {
-        zonas[1].contaminantes.co2[i] = 850.7 + i * 15;
-        zonas[1].contaminantes.so2[i] = 65.8 + i * 3;
-        zonas[1].contaminantes.no2[i] = 125.4 + i * 5;
-        zonas[1].contaminantes.pm25[i] = 35.6 + i * 2;
-        zonas[1].factoresClimaticos.temperatura[i] = 20.1 - i * 0.3;
-        zonas[1].factoresClimaticos.humedad[i] = 58.3 - i * 1;
-        zonas[1].factoresClimaticos.velocidadViento[i] = 12.5 + i * 0.5;
-        strcpy(zonas[1].factoresClimaticos.direccionViento[i], "SO");
-    }
-    strcpy(zonas[1].fecha, "15/07/2025");
-    strcpy(zonas[1].hora, "10:30:00");
+        for (int i = 0; i < numRegistros; i++) {
+            zonas[z].contaminantes.co2[i] = 850 + i * 1.1;
+            zonas[z].contaminantes.so2[i] = 20 + i * 0.5;
+            zonas[z].contaminantes.no2[i] = 10 + i * 0.5;
+            zonas[z].contaminantes.pm25[i] = 5 + i * 0.1;
+            zonas[z].factoresClimaticos.temperatura[i] = 18 + i * 0.5;
+            zonas[z].factoresClimaticos.humedad[i] = 70 - i * 1;
+            zonas[z].factoresClimaticos.velocidadViento[i] = 9 + i * 0.2;
+            zonas[z].factoresClimaticos.direccionViento[i] = 10 + i * 0.1; // Dirección en grados como float
 
-    // Zona 3: Zona Residencial Sur
-    zonas[2].id = 3;
-    strcpy(zonas[2].nombre, "Zona Residencial Sur");
-    strcpy(zonas[2].ubicacion, "Sector Residencial, Quito");
-    for (int i = 0; i < numRegistros; i++) {
-        zonas[2].contaminantes.co2[i] = 380.2 + i * 8;
-        zonas[2].contaminantes.so2[i] = 18.9 + i * 1;
-        zonas[2].contaminantes.no2[i] = 32.1 + i * 2;
-        zonas[2].contaminantes.pm25[i] = 12.8 + i * 0.5;
-        zonas[2].factoresClimaticos.temperatura[i] = 19.3 - i * 0.2;
-        zonas[2].factoresClimaticos.humedad[i] = 70.2 - i * 1;
-        zonas[2].factoresClimaticos.velocidadViento[i] = 6.8 + i * 0.3;
-        strcpy(zonas[2].factoresClimaticos.direccionViento[i], "E");
-    }
-    strcpy(zonas[2].fecha, "15/07/2025");
-    strcpy(zonas[2].hora, "09:00:00");
+            // Calcular la fecha y hora correspondiente
+            struct tm fechaBase = {0};
+            fechaBase.tm_year = 2025 - 1900;
+            fechaBase.tm_mon = 6; // Julio (0-indexed)
+            fechaBase.tm_mday = 9-i; // Ajustar para que la fecha sea dinámica
+            mktime(&fechaBase);
 
-    // Zona 4: Aeropuerto
-    zonas[3].id = 4;
-    strcpy(zonas[3].nombre, "Aeropuerto");
-    strcpy(zonas[3].ubicacion, "Aeropuerto Internacional, Quito");
-    for (int i = 0; i < numRegistros; i++) {
-        zonas[3].contaminantes.co2[i] = 600.4 + i * 12;
-        zonas[3].contaminantes.so2[i] = 30.5 + i * 1.5;
-        zonas[3].contaminantes.no2[i] = 55.3 + i * 4;
-        zonas[3].contaminantes.pm25[i] = 20.1 + i * 1;
-        zonas[3].factoresClimaticos.temperatura[i] = 21.0 - i * 0.4;
-        zonas[3].factoresClimaticos.humedad[i] = 60.0 - i * 0.5;
-        zonas[3].factoresClimaticos.velocidadViento[i] = 10.0 + i * 0.4;
-        strcpy(zonas[3].factoresClimaticos.direccionViento[i], "N");
+            sprintf(zonas[z].fecha[i], "%02d/%02d/%04d", fechaBase.tm_mday, fechaBase.tm_mon + 1, fechaBase.tm_year + 1900);
+            sprintf(zonas[z].hora[i], "08:%02d:00", i); // Ejemplo de hora dinámica
+        }
     }
-    strcpy(zonas[3].fecha, "15/07/2025");
-    strcpy(zonas[3].hora, "08:30:00");
-    
-    // Zona 5: Parque Nacional
-    zonas[4].id = 5;
-    strcpy(zonas[4].nombre, "Parque Nacional");
-    strcpy(zonas[4].ubicacion, "Parque Metropolitano, Quito");
-    for (int i = 0; i < numRegistros; i++) {
-        zonas[4].contaminantes.co2[i] = 320.8 + i * 5;
-        zonas[4].contaminantes.so2[i] = 12.1 + i * 0.5;
-        zonas[4].contaminantes.no2[i] = 22.5 + i * 1;
-        zonas[4].contaminantes.pm25[i] = 8.9 + i * 0.3;
-        zonas[4].factoresClimaticos.temperatura[i] = 17.2 - i * 0.2;
-        zonas[4].factoresClimaticos.humedad[i] = 75.5 - i * 0.3;
-        zonas[4].factoresClimaticos.velocidadViento[i] = 5.3 + i * 0.1;
-        strcpy(zonas[4].factoresClimaticos.direccionViento[i], "N");
-    }
-    strcpy(zonas[4].fecha, "15/07/2025");
-    strcpy(zonas[4].hora, "09:00:00");
-    
+
     guardarZonas(zonas, numZonas);
     printf("Zonas de monitoreo creadas y guardadas correctamente.\n");
 }
@@ -149,17 +91,7 @@ void mostrarZonas(struct ZonaMonitoreo zonas[], int numZonas) {
     printf("------------------------------------------------------------\n");
 
     for (int j = 0; j < numRegistros; j++) {
-        // Calcular la fecha correspondiente
-        struct tm fechaBase = {0};
-        fechaBase.tm_year = 2025 - 1900;
-        fechaBase.tm_mon = 6; // Julio (0-indexed)
-        fechaBase.tm_mday = 9 - j; // Cambiar la fecha base al 9 de julio
-        mktime(&fechaBase);
-
-        char fechaCalculada[20];
-        sprintf(fechaCalculada, "%02d/%02d/%04d", fechaBase.tm_mday, fechaBase.tm_mon + 1, fechaBase.tm_year + 1900);
-
-        printf("| %s | %7.2f | %7.2f | %7.2f | %7.2f |\n", fechaCalculada, zonaSeleccionada.contaminantes.co2[j], zonaSeleccionada.contaminantes.so2[j], zonaSeleccionada.contaminantes.no2[j], zonaSeleccionada.contaminantes.pm25[j]);
+        printf("| %s | %7.2f | %7.2f | %7.2f | %7.2f |\n", zonaSeleccionada.fecha[j], zonaSeleccionada.contaminantes.co2[j], zonaSeleccionada.contaminantes.so2[j], zonaSeleccionada.contaminantes.no2[j], zonaSeleccionada.contaminantes.pm25[j]);
     }
     printf("------------------------------------------------------------\n");
 
@@ -169,17 +101,7 @@ void mostrarZonas(struct ZonaMonitoreo zonas[], int numZonas) {
     printf("---------------------------------------------------------------------\n");
 
     for (int j = 0; j < numRegistros; j++) {
-        // Calcular la fecha correspondiente
-        struct tm fechaBase = {0};
-        fechaBase.tm_year = 2025 - 1900;
-        fechaBase.tm_mon = 6; // Julio (0-indexed)
-        fechaBase.tm_mday = 9 - j; // Cambiar la fecha base al 9 de julio
-        mktime(&fechaBase);
-
-        char fechaCalculada[20];
-        sprintf(fechaCalculada, "%02d/%02d/%04d", fechaBase.tm_mday, fechaBase.tm_mon + 1, fechaBase.tm_year + 1900);
-
-        printf("| %s |   %7.2f   | %7.2f |   %7.2f   |   %s   |\n", fechaCalculada, zonaSeleccionada.factoresClimaticos.temperatura[j], zonaSeleccionada.factoresClimaticos.humedad[j], zonaSeleccionada.factoresClimaticos.velocidadViento[j], zonaSeleccionada.factoresClimaticos.direccionViento[j]);
+        printf("| %s |   %7.2f   | %7.2f |   %7.2f   |   %7.2f   |\n", zonaSeleccionada.fecha[j], zonaSeleccionada.factoresClimaticos.temperatura[j], zonaSeleccionada.factoresClimaticos.humedad[j], zonaSeleccionada.factoresClimaticos.velocidadViento[j], zonaSeleccionada.factoresClimaticos.direccionViento[j]);
     }
     printf("---------------------------------------------------------------------\n");
 }
@@ -387,7 +309,7 @@ void exportarDatos(struct ZonaMonitoreo zonas[], int numZonas){
         fprintf(archivo, "| Día | Temperatura | Humedad | Vel. Viento | Dir. Viento |\n");
         fprintf(archivo, "----------------------------------------\n");
         for (int j = 0; j < numRegistros; j++) {
-            fprintf(archivo, "|  %d  | %10.2f | %7.2f | %10.2f | %10s |\n", j + 1, zonas[i].factoresClimaticos.temperatura[j], zonas[i].factoresClimaticos.humedad[j], zonas[i].factoresClimaticos.velocidadViento[j], zonas[i].factoresClimaticos.direccionViento[j]);
+            fprintf(archivo, "|  %d  | %10.2f | %7.2f | %10.2f | %10f |\n", j + 1, zonas[i].factoresClimaticos.temperatura[j], zonas[i].factoresClimaticos.humedad[j], zonas[i].factoresClimaticos.velocidadViento[j], zonas[i].factoresClimaticos.direccionViento[j]);
         }
         fprintf(archivo, "----------------------------------------\n");
 
@@ -441,11 +363,11 @@ int menu(){
     printf("========================================\n");
     printf("1. Crear Zonas de Monitoreo\n");
     printf("2. Mostrar Zonas de Monitoreo\n");
-    printf("3. Generar Predicciones\n");
+    printf("3. Generar Predicciones (24h)\n");
     printf("4. Generar Alertas\n");
-    printf("5. Generar Reporte Completo\n");
+    printf("5. Generar Recomendaciones\n");
     printf("6. Exportar Datos\n");
-    printf("7. Agregar Reporte\n");
+    printf("7. Agregar Reporte actual\n");
     printf("8. Salir\n");
     printf("========================================\n");
     printf("Seleccione una opción: ");
@@ -454,9 +376,9 @@ int menu(){
     return opc;
 }
 
-void agregarReporte(struct ZonaMonitoreo *zona, float co2, float so2, float no2, float pm25, float temperatura, float humedad, float velocidadViento, const char *direccionViento, const char *fecha, const char *hora) {
+void agregarReporte(struct ZonaMonitoreo *zona, float co2, float so2, float no2, float pm25, float temperatura, float humedad, float velocidadViento, float direccionViento, char fecha[], char hora[]) {
     // Shift old data
-    for (int i = numRegistros - 1; i > 0; i--) {
+    for (int i = numRegistros; i > 0; i--) {
         zona->contaminantes.co2[i] = zona->contaminantes.co2[i - 1];
         zona->contaminantes.so2[i] = zona->contaminantes.so2[i - 1];
         zona->contaminantes.no2[i] = zona->contaminantes.no2[i - 1];
@@ -464,7 +386,9 @@ void agregarReporte(struct ZonaMonitoreo *zona, float co2, float so2, float no2,
         zona->factoresClimaticos.temperatura[i] = zona->factoresClimaticos.temperatura[i - 1];
         zona->factoresClimaticos.humedad[i] = zona->factoresClimaticos.humedad[i - 1];
         zona->factoresClimaticos.velocidadViento[i] = zona->factoresClimaticos.velocidadViento[i - 1];
-        strcpy(zona->factoresClimaticos.direccionViento[i], zona->factoresClimaticos.direccionViento[i - 1]);
+        zona->factoresClimaticos.direccionViento[i] = zona->factoresClimaticos.direccionViento[i - 1];
+        strcpy(zona->fecha[i], zona->fecha[i - 1]);
+        strcpy(zona->hora[i], zona->hora[i - 1]);
     }
 
     // Add new data
@@ -475,11 +399,29 @@ void agregarReporte(struct ZonaMonitoreo *zona, float co2, float so2, float no2,
     zona->factoresClimaticos.temperatura[0] = temperatura;
     zona->factoresClimaticos.humedad[0] = humedad;
     zona->factoresClimaticos.velocidadViento[0] = velocidadViento;
-    strcpy(zona->factoresClimaticos.direccionViento[0], direccionViento);
+    zona->factoresClimaticos.direccionViento[0] = direccionViento;
 
     // Update date and time
-    strcpy(zona->fecha, fecha);
-    strcpy(zona->hora, hora);
+    strcpy(zona->fecha[0], fecha);
+    strcpy(zona->hora[0], hora);
+
+    // Guardar los cambios en el archivo
+    struct ZonaMonitoreo zonas[20];
+    int numZonas;
+    if (cargarZonas(zonas, &numZonas)) {
+        for (int i = 0; i < numZonas; i++) {
+            if (zonas[i].id == zona->id) {
+                zonas[i] = *zona;
+                break;
+            }
+        }
+        guardarZonas(zonas, numZonas);
+    }
+
+    // Incrementar el número de registros si es menor al máximo permitido
+    if (numRegistros < 50) {
+        numRegistros++;
+    }
 }
 
 void obtenerFechaHora(char *fecha, char *hora) {

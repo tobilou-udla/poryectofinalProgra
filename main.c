@@ -58,7 +58,8 @@ int main() {
                 if(cargarZonas(zonas, &numZonas)) {
                     int zonaId;
                     float co2, so2, no2, pm25, temperatura, humedad, velocidadViento;
-                    char direccionViento[10], fecha[20], hora[10];
+                    float direccionViento;
+                    char fecha[20], hora[10];
 
                     printf("Ingrese el ID de la zona para agregar el reporte: ");
                     scanf("%d", &zonaId);
@@ -78,8 +79,8 @@ int main() {
                     scanf("%f", &humedad);
                     printf("Velocidad del viento (km/h): ");
                     scanf("%f", &velocidadViento);
-                    printf("Dirección del viento: ");
-                    scanf("%s", direccionViento);
+                    printf("Dirección del viento (grados): ");
+                    scanf("%f", &direccionViento);
                     obtenerFechaHora(fecha, hora);
 
                     for (int i = 0; i < numZonas; i++) {
@@ -98,7 +99,7 @@ int main() {
                 break;
         }
 
-    } while (opc != 7);
+    } while (opc != 8);
     
     return 0;
 }
