@@ -33,20 +33,20 @@ void crearZonasMonitoreo(){
         sprintf(zonas[z].ubicacion, "Ubicación %d", z + 1);
 
         for (int i = 0; i < numRegistros; i++) {
-            zonas[z].contaminantes.co2[i] = 850 + i * 1.1;
-            zonas[z].contaminantes.so2[i] = 20 + i * 0.5;
-            zonas[z].contaminantes.no2[i] = 10 + i * 0.5;
-            zonas[z].contaminantes.pm25[i] = 5 + i * 0.1;
-            zonas[z].factoresClimaticos.temperatura[i] = 18 + i * 0.5;
-            zonas[z].factoresClimaticos.humedad[i] = 70 - i * 1;
-            zonas[z].factoresClimaticos.velocidadViento[i] = 9 + i * 0.2;
-            zonas[z].factoresClimaticos.direccionViento[i] = 10 + i * 0.1; // Dirección en grados como float
+            zonas[z].contaminantes.co2[i] = 850 + i * 1.1 + z * 10; // Variación por zona
+            zonas[z].contaminantes.so2[i] = 20 + i * 0.5 + z * 2; // Variación por zona
+            zonas[z].contaminantes.no2[i] = 10 + i * 0.5 + z * 1.5; // Variación por zona
+            zonas[z].contaminantes.pm25[i] = 5 + i * 0.1 + z * 0.5; // Variación por zona
+            zonas[z].factoresClimaticos.temperatura[i] = 18 + i * 0.5 + z * 0.3; // Variación por zona
+            zonas[z].factoresClimaticos.humedad[i] = 70 - i * 1 - z * 0.5; // Variación por zona
+            zonas[z].factoresClimaticos.velocidadViento[i] = 9 + i * 0.2 + z * 0.1; // Variación por zona
+            zonas[z].factoresClimaticos.direccionViento[i] = 10 + i * 0.1 + z * 0.2; // Variación por zona
 
             // Calcular la fecha y hora correspondiente
             struct tm fechaBase = {0};
             fechaBase.tm_year = 2025 - 1900;
             fechaBase.tm_mon = 6; // Julio (0-indexed)
-            fechaBase.tm_mday = 9-i; // Ajustar para que la fecha sea dinámica
+            fechaBase.tm_mday = 9 - i; // Ajustar para que la fecha sea dinámica
             mktime(&fechaBase);
 
             sprintf(zonas[z].fecha[i], "%02d/%02d/%04d", fechaBase.tm_mday, fechaBase.tm_mon + 1, fechaBase.tm_year + 1900);
@@ -127,69 +127,135 @@ int cargarZonas(struct ZonaMonitoreo zonas[], int *numZonas){
     return 1;
 }
 
-void generarPrediccion(struct ZonaMonitoreo zonas[], int numZonas){
-    printf("\n=== PREDICCIONES BASADAS EN PROMEDIOS ===\n");
-    printf("========================================\n");
-    for (int i = 0; i < numZonas; i++) {
-        float promedioCO2 = 0, promedioSO2 = 0, promedioNO2 = 0, promedioPM25 = 0;
-        for (int j = 0; j < numRegistros; j++) {
-            promedioCO2 += zonas[i].contaminantes.co2[j];
-            promedioSO2 += zonas[i].contaminantes.so2[j];
-            promedioNO2 += zonas[i].contaminantes.no2[j];
-            promedioPM25 += zonas[i].contaminantes.pm25[j];
-        }
-        promedioCO2 /= numRegistros;
-        promedioSO2 /= numRegistros;
-        promedioNO2 /= numRegistros;
-        promedioPM25 /= numRegistros;
+float promedioPonderado(float valores[], int numRegistros) {
+    float suma = 0, totalPesos = 0;
+    for (int i = 0; i < numRegistros; i++) {
+        int peso = numRegistros - i;
+        suma += valores[i] * peso;
+        totalPesos += peso;
+    }
+    return suma / totalPesos;
+}
 
-        printf("Zona: %s\n", zonas[i].nombre);
-        printf("Promedio CO2: %.2f ppm\n", promedioCO2);
-        printf("Promedio SO2: %.2f µg/m³\n", promedioSO2);
-        printf("Promedio NO2: %.2f µg/m³\n", promedioNO2);
-        printf("Promedio PM2.5: %.2f µg/m³\n", promedioPM25);
-        printf("----------------------------------------\n");
+float promedio(float valores[], int numRegistros) {
+    float suma = 0;
+    for (int i = 0; i < numRegistros; i++) {
+        suma += valores[i];
+    }
+    return suma / numRegistros;
+}
+
+void generarPrediccion(struct ZonaMonitoreo zonas[], int numZonas) {
+    if (numZonas == 0) {
+        printf("No hay zonas de monitoreo disponibles para generar predicciones.\n");
+        return;
+    }
+
+    printf("\n=== SELECCIONE UNA ZONA DE MONITOREO PARA VER PREDICCIONES ===\n");
+    for (int i = 0; i < numZonas; i++) {
+        printf("%d. %s\n", i + 1, zonas[i].nombre);
+    }
+
+    int seleccion;
+    printf("Ingrese el número de la zona que desea ver: ");
+    scanf("%d", &seleccion);
+
+    if (seleccion < 1 || seleccion > numZonas) {
+        printf("Selección inválida.\n");
+        return;
+    }
+
+    struct ZonaMonitoreo zonaSeleccionada = zonas[seleccion - 1];
+
+    printf("\n=== PREDICCIONES BASADAS EN PROMEDIOS PONDERADOS PARA LA ZONA: %s ===\n", zonaSeleccionada.nombre);
+    float co2Predicho = promedioPonderado(zonaSeleccionada.contaminantes.co2, numRegistros);
+    float so2Predicho = promedioPonderado(zonaSeleccionada.contaminantes.so2, numRegistros);
+    float no2Predicho = promedioPonderado(zonaSeleccionada.contaminantes.no2, numRegistros);
+    float pm25Predicho = promedioPonderado(zonaSeleccionada.contaminantes.pm25, numRegistros);
+
+    printf("CO2: %.2f ppm | SO2: %.2f µg/m³ | NO2: %.2f µg/m³ | PM2.5: %.2f µg/m³\n",
+           co2Predicho, so2Predicho, no2Predicho, pm25Predicho);
+}
+
+void generarAlertas(struct ZonaMonitoreo zonas[], int numZonas) {
+    if (numZonas == 0) {
+        printf("No hay zonas de monitoreo disponibles.\n");
+        return;
+    }
+
+    printf("\n=== SELECCIONE UNA ZONA DE MONITOREO PARA VER ALERTAS ===\n");
+    for (int i = 0; i < numZonas; i++) {
+        printf("%d. %s\n", i + 1, zonas[i].nombre);
+    }
+
+    int seleccion;
+    printf("Ingrese el número de la zona que desea ver: ");
+    scanf("%d", &seleccion);
+
+    if (seleccion < 1 || seleccion > numZonas) {
+        printf("Selección inválida.\n");
+        return;
+    }
+
+    struct ZonaMonitoreo zonaSeleccionada = zonas[seleccion - 1];
+    struct ReporteActual reporte = zonaSeleccionada.reporteActual;
+
+    printf("\n=== ALERTAS PARA LA ZONA: %s ===\n", zonaSeleccionada.nombre);
+    if (reporte.co2 > UMBRAL_CO2_EMERGENCIA) {
+        printf("EMERGENCIA: CO2 excede el umbral de emergencia (%.2f ppm)\n", reporte.co2);
+    } else if (reporte.co2 > UMBRAL_CO2_ALERTA) {
+        printf("ALERTA: CO2 excede el umbral crítico (%.2f ppm)\n", reporte.co2);
+    } else if (reporte.co2 > UMBRAL_CO2_PRECAUCION) {
+        printf("PRECAUCION: CO2 excede el umbral de precaución (%.2f ppm)\n", reporte.co2);
+    }
+
+    if (reporte.pm25 > UMBRAL_PM25_EMERGENCIA) {
+        printf("EMERGENCIA: PM2.5 excede el umbral de emergencia (%.2f µg/m³)\n", reporte.pm25);
+    } else if (reporte.pm25 > UMBRAL_PM25_ALERTA) {
+        printf("ALERTA: PM2.5 excede el umbral crítico (%.2f µg/m³)\n", reporte.pm25);
+    } else if (reporte.pm25 > UMBRAL_PM25_PRECAUCION) {
+        printf("PRECAUCION: PM2.5 excede el umbral de precaución (%.2f µg/m³)\n", reporte.pm25);
     }
 }
 
-void generarAlertas(struct ZonaMonitoreo zonas[], int numZonas){
-    printf("\n=== ALERTAS GENERADAS ===\n");
-    printf("========================================\n");
+void generarRecomendaciones(struct ZonaMonitoreo zonas[], int numZonas) {
+    if (numZonas == 0) {
+        printf("No hay zonas de monitoreo disponibles.\n");
+        return;
+    }
+
+    printf("\n=== SELECCIONE UNA ZONA DE MONITOREO PARA VER RECOMENDACIONES ===\n");
     for (int i = 0; i < numZonas; i++) {
-        for (int j = 0; j < numRegistros; j++) {
-            if (zonas[i].contaminantes.co2[j] > UMBRAL_CO2_EMERGENCIA) {
-                printf("EMERGENCIA: CO2 excede el umbral de emergencia en zona %s, día %d (%.2f ppm)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.co2[j]);
-            } else if (zonas[i].contaminantes.co2[j] > UMBRAL_CO2_ALERTA) {
-                printf("ALERTA: CO2 excede el umbral crítico en zona %s, día %d (%.2f ppm)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.co2[j]);
-            } else if (zonas[i].contaminantes.co2[j] > UMBRAL_CO2_PRECAUCION) {
-                printf("PRECAUCIÓN: CO2 excede el umbral de precaución en zona %s, día %d (%.2f ppm)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.co2[j]);
-            }
+        printf("%d. %s\n", i + 1, zonas[i].nombre);
+    }
 
-            if (zonas[i].contaminantes.so2[j] > UMBRAL_SO2_EMERGENCIA) {
-                printf("EMERGENCIA: SO2 excede el umbral de emergencia en zona %s, día %d (%.2f µg/m³)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.so2[j]);
-            } else if (zonas[i].contaminantes.so2[j] > UMBRAL_SO2_ALERTA) {
-                printf("ALERTA: SO2 excede el umbral crítico en zona %s, día %d (%.2f µg/m³)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.so2[j]);
-            } else if (zonas[i].contaminantes.so2[j] > UMBRAL_SO2_PRECAUCION) {
-                printf("PRECAUCIÓN: SO2 excede el umbral de precaución en zona %s, día %d (%.2f µg/m³)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.so2[j]);
-            }
+    int seleccion;
+    printf("Ingrese el número de la zona que desea ver: ");
+    scanf("%d", &seleccion);
 
-            if (zonas[i].contaminantes.no2[j] > UMBRAL_NO2_EMERGENCIA) {
-                printf("EMERGENCIA: NO2 excede el umbral de emergencia en zona %s, día %d (%.2f µg/m³)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.no2[j]);
-            } else if (zonas[i].contaminantes.no2[j] > UMBRAL_NO2_ALERTA) {
-                printf("ALERTA: NO2 excede el umbral crítico en zona %s, día %d (%.2f µg/m³)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.no2[j]);
-            } else if (zonas[i].contaminantes.no2[j] > UMBRAL_NO2_PRECAUCION) {
-                printf("PRECAUCIÓN: NO2 excede el umbral de precaución en zona %s, día %d (%.2f µg/m³)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.no2[j]);
-            }
+    if (seleccion < 1 || seleccion > numZonas) {
+        printf("Selección inválida.\n");
+        return;
+    }
 
-            if (zonas[i].contaminantes.pm25[j] > UMBRAL_PM25_EMERGENCIA) {
-                printf("EMERGENCIA: PM2.5 excede el umbral de emergencia en zona %s, día %d (%.2f µg/m³)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.pm25[j]);
-            } else if (zonas[i].contaminantes.pm25[j] > UMBRAL_PM25_ALERTA) {
-                printf("ALERTA: PM2.5 excede el umbral crítico en zona %s, día %d (%.2f µg/m³)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.pm25[j]);
-            } else if (zonas[i].contaminantes.pm25[j] > UMBRAL_PM25_PRECAUCION) {
-                printf("PRECAUCIÓN: PM2.5 excede el umbral de precaución en zona %s, día %d (%.2f µg/m³)\n", zonas[i].nombre, j + 1, zonas[i].contaminantes.pm25[j]);
-            }
-        }
-        printf("----------------------------------------\n"); // Linea separadora entre zonas
+    struct ZonaMonitoreo zonaSeleccionada = zonas[seleccion - 1];
+    struct ReporteActual reporte = zonaSeleccionada.reporteActual;
+
+    printf("\n=== RECOMENDACIONES PARA LA ZONA: %s ===\n", zonaSeleccionada.nombre);
+    if (reporte.co2 > UMBRAL_CO2_EMERGENCIA) {
+        printf("Evacuar debido a niveles críticos de CO2.\n");
+    } else if (reporte.co2 > UMBRAL_CO2_ALERTA) {
+        printf("Reducir actividades industriales.\n");
+    } else if (reporte.co2 > UMBRAL_CO2_PRECAUCION) {
+        printf("Monitorear niveles de CO2.\n");
+    }
+
+    if (reporte.pm25 > UMBRAL_PM25_EMERGENCIA) {
+        printf("Evacuar debido a niveles críticos de PM2.5.\n");
+    } else if (reporte.pm25 > UMBRAL_PM25_ALERTA) {
+        printf("Usar mascarillas.\n");
+    } else if (reporte.pm25 > UMBRAL_PM25_PRECAUCION) {
+        printf("Reducir actividades al aire libre.\n");
     }
 }
 
@@ -214,35 +280,6 @@ void calcularPromedios(struct ZonaMonitoreo *zona, float *promedioCO2, float *pr
     *promedioTemperatura = sumaTemperatura / numRegistros;
     *promedioHumedad = sumaHumedad / numRegistros;
     *promedioVelocidadViento = sumaVelocidadViento / numRegistros;
-}
-
-void generarRecomendaciones(struct ZonaMonitoreo zonas[], int numZonas) {
-    for (int i = 0; i < numZonas; i++) {
-        float promedioCO2, promedioSO2, promedioNO2, promedioPM25;
-        float promedioTemperatura, promedioHumedad, promedioVelocidadViento;
-
-        calcularPromedios(&zonas[i], &promedioCO2, &promedioSO2, &promedioNO2, &promedioPM25, &promedioTemperatura, &promedioHumedad, &promedioVelocidadViento);
-
-        printf("Recomendaciones para la zona %s:\n", zonas[i].nombre);
-
-        if (promedioCO2 > UMBRAL_CO2_ALERTA || zonas[i].contaminantes.co2[0] > UMBRAL_CO2_ALERTA) {
-            printf("- Reducir actividades que generen emisiones de CO2.\n");
-        }
-        if (promedioSO2 > UMBRAL_SO2_ALERTA || zonas[i].contaminantes.so2[0] > UMBRAL_SO2_ALERTA) {
-            printf("- Evitar actividades al aire libre.\n");
-        }
-        if (promedioNO2 > UMBRAL_NO2_ALERTA || zonas[i].contaminantes.no2[0] > UMBRAL_NO2_ALERTA) {
-            printf("- Usar mascarillas en exteriores.\n");
-        }
-        if (promedioPM25 > UMBRAL_PM25_ALERTA || zonas[i].contaminantes.pm25[0] > UMBRAL_PM25_ALERTA) {
-            printf("- Mantener ventanas cerradas y usar purificadores de aire.\n");
-        }
-
-        printf("- Promedio de temperatura: %.2f°C\n", promedioTemperatura);
-        printf("- Promedio de humedad: %.2f%%\n", promedioHumedad);
-        printf("- Promedio de velocidad del viento: %.2f km/h\n", promedioVelocidadViento);
-        printf("----------------------------------------\n");
-    }
 }
 
 void generarRecomendacionesCompletas(struct ZonaMonitoreo zonas[], int numZonas) {
@@ -282,78 +319,105 @@ void generarRecomendacionesCompletas(struct ZonaMonitoreo zonas[], int numZonas)
     }
 }
 
-void exportarDatos(struct ZonaMonitoreo zonas[], int numZonas){
-    FILE *archivo = fopen("reporte_contaminacion.txt", "w");
-    if (archivo == NULL) {
-        printf("Error al abrir el archivo para exportar datos.\n");
+void exportarDatos(struct ZonaMonitoreo zonas[], int numZonas) {
+    if (numZonas == 0) {
+        printf("No hay zonas de monitoreo disponibles para exportar.");
         return;
     }
 
-    fprintf(archivo, "\n=== REPORTE DE CONTAMINACIÓN ===\n");
-    fprintf(archivo, "========================================\n");
+    printf("\n=== SELECCIONE UNA ZONA DE MONITOREO PARA EXPORTAR DATOS ===\n");
     for (int i = 0; i < numZonas; i++) {
-        fprintf(archivo, "\nZona: %s\n", zonas[i].nombre);
-        fprintf(archivo, "Ubicación: %s\n", zonas[i].ubicacion);
-        fprintf(archivo, "Fecha: %s\n", zonas[i].fecha);
-        fprintf(archivo, "\nContaminantes (últimos 7 días):\n");
-        fprintf(archivo, "----------------------------------------\n");
-        fprintf(archivo, "| Día |   CO2   |   SO2   |   NO2   |  PM2.5  |\n");
-        fprintf(archivo, "----------------------------------------\n");
-        for (int j = 0; j < numRegistros; j++) {
-            fprintf(archivo, "|  %d  | %7.2f | %7.2f | %7.2f | %7.2f |\n", j + 1, zonas[i].contaminantes.co2[j], zonas[i].contaminantes.so2[j], zonas[i].contaminantes.no2[j], zonas[i].contaminantes.pm25[j]);
-        }
-        fprintf(archivo, "----------------------------------------\n");
+        printf("%d. %s\n", i + 1, zonas[i].nombre);
+    }
 
-        fprintf(archivo, "\nFactores Climáticos (últimos 7 días):\n");
-        fprintf(archivo, "----------------------------------------\n");
-        fprintf(archivo, "| Día | Temperatura | Humedad | Vel. Viento | Dir. Viento |\n");
-        fprintf(archivo, "----------------------------------------\n");
-        for (int j = 0; j < numRegistros; j++) {
-            fprintf(archivo, "|  %d  | %10.2f | %7.2f | %10.2f | %10f |\n", j + 1, zonas[i].factoresClimaticos.temperatura[j], zonas[i].factoresClimaticos.humedad[j], zonas[i].factoresClimaticos.velocidadViento[j], zonas[i].factoresClimaticos.direccionViento[j]);
-        }
-        fprintf(archivo, "----------------------------------------\n");
+    int seleccion;
+    printf("Ingrese el número de la zona que desea exportar: ");
+    scanf("%d", &seleccion);
 
-        fprintf(archivo, "\nRecomendaciones:\n");
-        for (int j = 0; j < numRegistros; j++) {
-            if (zonas[i].contaminantes.co2[j] > UMBRAL_CO2_EMERGENCIA) {
-                fprintf(archivo, "- Evacuar la zona en el día %d debido a niveles críticos de CO2.\n", j + 1);
-            } else if (zonas[i].contaminantes.co2[j] > UMBRAL_CO2_ALERTA) {
-                fprintf(archivo, "- Reducir actividades industriales en el día %d.\n", j + 1);
-            } else if (zonas[i].contaminantes.co2[j] > UMBRAL_CO2_PRECAUCION) {
-                fprintf(archivo, "- Monitorear niveles de CO2 en el día %d.\n", j + 1);
-            }
+    if (seleccion < 1 || seleccion > numZonas) {
+        printf("Selección inválida.\n");
+        return;
+    }
 
-            if (zonas[i].contaminantes.pm25[j] > UMBRAL_PM25_EMERGENCIA) {
-                fprintf(archivo, "- Evacuar la zona en el día %d debido a niveles críticos de PM2.5.\n", j + 1);
-            } else if (zonas[i].contaminantes.pm25[j] > UMBRAL_PM25_ALERTA) {
-                fprintf(archivo, "- Usar mascarillas en el día %d.\n", j + 1);
-            } else if (zonas[i].contaminantes.pm25[j] > UMBRAL_PM25_PRECAUCION) {
-                fprintf(archivo, "- Reducir actividades al aire libre en el día %d.\n", j + 1);
-            }
-        }
-        fprintf(archivo, "\nAlertas:\n");
-        for (int j = 0; j < numRegistros; j++) {
-            if (zonas[i].contaminantes.co2[j] > UMBRAL_CO2_EMERGENCIA) {
-                fprintf(archivo, "EMERGENCIA: CO2 excede el umbral de emergencia en el día %d (%.2f ppm)\n", j + 1, zonas[i].contaminantes.co2[j]);
-            } else if (zonas[i].contaminantes.co2[j] > UMBRAL_CO2_ALERTA) {
-                fprintf(archivo, "ALERTA: CO2 excede el umbral crítico en el día %d (%.2f ppm)\n", j + 1, zonas[i].contaminantes.co2[j]);
-            } else if (zonas[i].contaminantes.co2[j] > UMBRAL_CO2_PRECAUCION) {
-                fprintf(archivo, "PRECAUCION: CO2 excede el umbral de precaución en el día %d (%.2f ppm)\n", j + 1, zonas[i].contaminantes.co2[j]);
-            }
+    struct ZonaMonitoreo zonaSeleccionada = zonas[seleccion - 1];
 
-            if (zonas[i].contaminantes.pm25[j] > UMBRAL_PM25_EMERGENCIA) {
-                fprintf(archivo, "EMERGENCIA: PM2.5 excede el umbral de emergencia en el día %d (%.2f µg/m³)\n", j + 1, zonas[i].contaminantes.pm25[j]);
-            } else if (zonas[i].contaminantes.pm25[j] > UMBRAL_PM25_ALERTA) {
-                fprintf(archivo, "ALERTA: PM2.5 excede el umbral crítico en el día %d (%.2f µg/m³)\n", j + 1, zonas[i].contaminantes.pm25[j]);
-            } else if (zonas[i].contaminantes.pm25[j] > UMBRAL_PM25_PRECAUCION) {
-                fprintf(archivo, "PRECAUCION: PM2.5 excede el umbral de precaución en el día %d (%.2f µg/m³)\n", j + 1, zonas[i].contaminantes.pm25[j]);
-            }
-        }
-        fprintf(archivo, "----------------------------------------\n");
+    char nombreArchivo[100];
+    sprintf(nombreArchivo, "reporte_contaminacion_zona_%d.txt", zonaSeleccionada.id);
+
+    FILE *archivo = fopen(nombreArchivo, "w");
+    if (archivo == NULL) {
+        printf("No se pudo abrir el archivo para exportar los datos.\n");
+        return;
+    }
+
+    char fecha[20], hora[10];
+    obtenerFechaHora(fecha, hora);
+
+    fprintf(archivo, "Fecha del reporte: %s\n", fecha);
+    fprintf(archivo, "Hora del reporte: %s\n", hora);
+
+    fprintf(archivo, "\n=== REPORTE DE CONTAMINACIÓN ===\n");
+    fprintf(archivo, "Zona: %s\n", zonaSeleccionada.nombre);
+    fprintf(archivo, "Ubicación: %s\n", zonaSeleccionada.ubicacion);
+
+    fprintf(archivo, "\nDatos actuales registrados:\n");
+    fprintf(archivo, "CO2: %.2f ppm | SO2: %.2f µg/m³ | NO2: %.2f µg/m³ | PM2.5: %.2f µg/m³\n", 
+            zonaSeleccionada.reporteActual.co2, zonaSeleccionada.reporteActual.so2, 
+            zonaSeleccionada.reporteActual.no2, zonaSeleccionada.reporteActual.pm25);
+    fprintf(archivo, "Temperatura: %.2f °C | Humedad: %.2f %% | Vel. Viento: %.2f km/h | Dir. Viento: %.2f°\n", 
+            zonaSeleccionada.reporteActual.temperatura, zonaSeleccionada.reporteActual.humedad, 
+            zonaSeleccionada.reporteActual.velocidadViento, zonaSeleccionada.reporteActual.direccionViento);
+
+    fprintf(archivo, "\nPromedio histórico:\n");
+    fprintf(archivo, "CO2: %.2f ppm | SO2: %.2f µg/m³ | NO2: %.2f µg/m³ | PM2.5: %.2f µg/m³\n",
+            promedio(zonaSeleccionada.contaminantes.co2, numRegistros),
+            promedio(zonaSeleccionada.contaminantes.so2, numRegistros),
+            promedio(zonaSeleccionada.contaminantes.no2, numRegistros),
+            promedio(zonaSeleccionada.contaminantes.pm25, numRegistros));
+
+    fprintf(archivo, "\nPredicción:\n");
+    fprintf(archivo, "CO2: %.2f ppm | SO2: %.2f µg/m³ | NO2: %.2f µg/m³ | PM2.5: %.2f µg/m³\n",
+            promedioPonderado(zonaSeleccionada.contaminantes.co2, numRegistros),
+            promedioPonderado(zonaSeleccionada.contaminantes.so2, numRegistros),
+            promedioPonderado(zonaSeleccionada.contaminantes.no2, numRegistros),
+            promedioPonderado(zonaSeleccionada.contaminantes.pm25, numRegistros));
+
+    fprintf(archivo, "\nAlertas:\n");
+    if (zonaSeleccionada.reporteActual.co2 > UMBRAL_CO2_EMERGENCIA) {
+        fprintf(archivo, "EMERGENCIA: CO2 excede el umbral de emergencia (%.2f ppm)\n", zonaSeleccionada.reporteActual.co2);
+    } else if (zonaSeleccionada.reporteActual.co2 > UMBRAL_CO2_ALERTA) {
+        fprintf(archivo, "ALERTA: CO2 excede el umbral crítico (%.2f ppm)\n", zonaSeleccionada.reporteActual.co2);
+    } else if (zonaSeleccionada.reporteActual.co2 > UMBRAL_CO2_PRECAUCION) {
+        fprintf(archivo, "PRECAUCION: CO2 excede el umbral de precaución (%.2f ppm)\n", zonaSeleccionada.reporteActual.co2);
+    }
+
+    if (zonaSeleccionada.reporteActual.pm25 > UMBRAL_PM25_EMERGENCIA) {
+        fprintf(archivo, "EMERGENCIA: PM2.5 excede el umbral de emergencia (%.2f µg/m³)\n", zonaSeleccionada.reporteActual.pm25);
+    } else if (zonaSeleccionada.reporteActual.pm25 > UMBRAL_PM25_ALERTA) {
+        fprintf(archivo, "ALERTA: PM2.5 excede el umbral crítico (%.2f µg/m³)\n", zonaSeleccionada.reporteActual.pm25);
+    } else if (zonaSeleccionada.reporteActual.pm25 > UMBRAL_PM25_PRECAUCION) {
+        fprintf(archivo, "PRECAUCION: PM2.5 excede el umbral de precaución (%.2f µg/m³)\n", zonaSeleccionada.reporteActual.pm25);
+    }
+
+    fprintf(archivo, "\nRecomendaciones:\n");
+    if (zonaSeleccionada.reporteActual.co2 > UMBRAL_CO2_EMERGENCIA) {
+        fprintf(archivo, "Evacuar debido a niveles críticos de CO2.\n");
+    } else if (zonaSeleccionada.reporteActual.co2 > UMBRAL_CO2_ALERTA) {
+        fprintf(archivo, "Reducir actividades industriales.\n");
+    } else if (zonaSeleccionada.reporteActual.co2 > UMBRAL_CO2_PRECAUCION) {
+        fprintf(archivo, "Monitorear niveles de CO2 regularmente.\n");
+    }
+
+    if (zonaSeleccionada.reporteActual.pm25 > UMBRAL_PM25_EMERGENCIA) {
+        fprintf(archivo, "Evacuar debido a niveles críticos de PM2.5.\n");
+    } else if (zonaSeleccionada.reporteActual.pm25 > UMBRAL_PM25_ALERTA) {
+        fprintf(archivo, "Usar mascarillas.\n");
+    } else if (zonaSeleccionada.reporteActual.pm25 > UMBRAL_PM25_PRECAUCION) {
+        fprintf(archivo, "Evitar actividades al aire libre.\n");
     }
 
     fclose(archivo);
-    printf("Datos exportados correctamente a reporte_contaminacion.txt\n");
+    printf("Datos exportados correctamente a %s\n", nombreArchivo);
 }
 
 int menu(){
@@ -376,54 +440,6 @@ int menu(){
     return opc;
 }
 
-void agregarReporte(struct ZonaMonitoreo *zona, float co2, float so2, float no2, float pm25, float temperatura, float humedad, float velocidadViento, float direccionViento, char fecha[], char hora[]) {
-    // Shift old data
-    for (int i = numRegistros; i > 0; i--) {
-        zona->contaminantes.co2[i] = zona->contaminantes.co2[i - 1];
-        zona->contaminantes.so2[i] = zona->contaminantes.so2[i - 1];
-        zona->contaminantes.no2[i] = zona->contaminantes.no2[i - 1];
-        zona->contaminantes.pm25[i] = zona->contaminantes.pm25[i - 1];
-        zona->factoresClimaticos.temperatura[i] = zona->factoresClimaticos.temperatura[i - 1];
-        zona->factoresClimaticos.humedad[i] = zona->factoresClimaticos.humedad[i - 1];
-        zona->factoresClimaticos.velocidadViento[i] = zona->factoresClimaticos.velocidadViento[i - 1];
-        zona->factoresClimaticos.direccionViento[i] = zona->factoresClimaticos.direccionViento[i - 1];
-        strcpy(zona->fecha[i], zona->fecha[i - 1]);
-        strcpy(zona->hora[i], zona->hora[i - 1]);
-    }
-
-    // Add new data
-    zona->contaminantes.co2[0] = co2;
-    zona->contaminantes.so2[0] = so2;
-    zona->contaminantes.no2[0] = no2;
-    zona->contaminantes.pm25[0] = pm25;
-    zona->factoresClimaticos.temperatura[0] = temperatura;
-    zona->factoresClimaticos.humedad[0] = humedad;
-    zona->factoresClimaticos.velocidadViento[0] = velocidadViento;
-    zona->factoresClimaticos.direccionViento[0] = direccionViento;
-
-    // Update date and time
-    strcpy(zona->fecha[0], fecha);
-    strcpy(zona->hora[0], hora);
-
-    // Guardar los cambios en el archivo
-    struct ZonaMonitoreo zonas[20];
-    int numZonas;
-    if (cargarZonas(zonas, &numZonas)) {
-        for (int i = 0; i < numZonas; i++) {
-            if (zonas[i].id == zona->id) {
-                zonas[i] = *zona;
-                break;
-            }
-        }
-        guardarZonas(zonas, numZonas);
-    }
-
-    // Incrementar el número de registros si es menor al máximo permitido
-    if (numRegistros < 50) {
-        numRegistros++;
-    }
-}
-
 void obtenerFechaHora(char *fecha, char *hora) {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
@@ -433,4 +449,43 @@ void obtenerFechaHora(char *fecha, char *hora) {
 
     // Formatear la hora como HH:MM:SS
     sprintf(hora, "%02d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
+}
+
+void ingresarDatosActuales(struct ZonaMonitoreo zonas[], int numZonas) {
+    for (int i = 0; i < numZonas; i++) {
+        printf("\n--- %s ---\n", zonas[i].nombre);
+        zonas[i].reporteActual.co2 = pedirFlotanteValido("Ingrese CO2 actual: ");
+        zonas[i].reporteActual.so2 = pedirFlotanteValido("Ingrese SO2 actual: ");
+        zonas[i].reporteActual.no2 = pedirFlotanteValido("Ingrese NO2 actual: ");
+        zonas[i].reporteActual.pm25 = pedirFlotanteValido("Ingrese PM2.5 actual: ");
+        zonas[i].reporteActual.temperatura = pedirFlotanteValido("Temperatura (°C): ");
+        zonas[i].reporteActual.velocidadViento = pedirFlotanteValido("Viento (km/h): ");
+        zonas[i].reporteActual.humedad = pedirFlotanteValido("Humedad (%): ");
+
+        for (int j = 29; j > 0; j--) {
+            zonas[i].contaminantes.co2[j] = zonas[i].contaminantes.co2[j - 1];
+            zonas[i].contaminantes.so2[j] = zonas[i].contaminantes.so2[j - 1];
+            zonas[i].contaminantes.no2[j] = zonas[i].contaminantes.no2[j - 1];
+            zonas[i].contaminantes.pm25[j] = zonas[i].contaminantes.pm25[j - 1];
+        }
+
+        zonas[i].contaminantes.co2[0] = zonas[i].reporteActual.co2;
+        zonas[i].contaminantes.so2[0] = zonas[i].reporteActual.so2;
+        zonas[i].contaminantes.no2[0] = zonas[i].reporteActual.no2;
+        zonas[i].contaminantes.pm25[0] = zonas[i].reporteActual.pm25;
+    }
+}
+
+float pedirFlotanteValido(const char *mensaje) {
+    float valor;
+    int valido;
+    do {
+        printf("%s", mensaje);
+        valido = scanf("%f", &valor);
+        fflush(stdin);
+        if (valido != 1) {
+            printf("Entrada inválida. Por favor, ingrese un número válido.\n");
+        }
+    } while (valido != 1);
+    return valor;
 }

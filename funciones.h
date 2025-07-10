@@ -1,3 +1,17 @@
+// Estructura para almacenar un reporte actual
+struct ReporteActual {
+    float co2;      // Dióxido de carbono (ppm)
+    float so2;      // Dióxido de azufre (µg/m³)
+    float no2;      // Dióxido de nitrógeno (µg/m³)
+    float pm25;     // Partículas PM2.5 (µg/m³)
+    float temperatura; // Temperatura (°C)
+    float humedad;     // Humedad relativa (%)
+    float velocidadViento; // Velocidad del viento (km/h)
+    float direccionViento; // Dirección del viento en grados
+    char fecha[20]; // Fecha del reporte actual
+    char hora[10];  // Hora del reporte actual
+};
+
 // Estructura para almacenar datos de contaminantes
 struct Contaminante
 {
@@ -26,6 +40,7 @@ struct ZonaMonitoreo
     struct FactoresClimaticos factoresClimaticos;
     char fecha[30][20]; // Arreglo para almacenar las últimas 30 fechas
     char hora[30][10];  // Arreglo para almacenar las últimas 30 horas
+    struct ReporteActual reporteActual; // Reporte actual anidado
 };
 
 // Funciones principales del sistema de monitoreo de contaminación
@@ -48,4 +63,6 @@ void generarAlertas(struct ZonaMonitoreo zonas[], int numZonas);
 // Funciones de reportes
 void exportarDatos(struct ZonaMonitoreo zonas[], int numZonas);
 void generarRecomendaciones(struct ZonaMonitoreo zonas[], int numZonas);
-void agregarReporte(struct ZonaMonitoreo *zona, float co2, float so2, float no2, float pm25, float temperatura, float humedad, float velocidadViento, float direccionViento, char fecha[], char hora[]);
+void agregarReporte(struct ZonaMonitoreo *zona, struct ReporteActual reporte);
+float pedirFlotanteValido(const char *mensaje);
+void ingresarDatosActuales(struct ZonaMonitoreo zonas[], int numZonas);
